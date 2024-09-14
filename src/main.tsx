@@ -17,7 +17,7 @@ if (rootElement) {
     <React.StrictMode>
       <MantineProvider>
         <Notifications position="top-right" />
-        <AuthProvider>
+        <AuthProvider> 
           <BrowserRouter>
             <Routes>
               {router.map((route, index) => (
