@@ -1,4 +1,3 @@
-import React from 'react';
 import HomePage from "./App/HomePage";
 import MainLayout from "./components/Layout/MainLayout";
 import LoginPage from "./App/LoginPage";
