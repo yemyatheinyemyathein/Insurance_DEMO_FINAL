@@ -7,6 +7,8 @@ import { MantineProvider } from "@mantine/core";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "@mantine/notifications/styles.css";
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 import { Notifications } from "@mantine/notifications";
 import { AuthProvider } from "./context/AuthContext.tsx";
 

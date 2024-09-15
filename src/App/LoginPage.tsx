@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import Bg from "../assets/Login/bg.jpg";
 
 const LoginPage = () => {
@@ -7,6 +8,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,8 +17,10 @@ const LoginPage = () => {
       setError("Please fill in both fields.");
       return;
     }
-    login();
-    window.location.href = "/";
+
+    // Simulating authentication
+    login(username); // Pass the username to the login function
+    navigate("/"); // Navigate to home page after login
   };
 
   return (
@@ -28,7 +32,6 @@ const LoginPage = () => {
         backgroundPosition: "top",
       }}
     >
-      {" "}
       <div className="max-w-md w-full bg-sky-200 shadow-xl rounded-lg p-8">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">Login</h2>
         {error && (

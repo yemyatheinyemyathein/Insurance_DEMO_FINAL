@@ -6,7 +6,7 @@ import ProtectedRoute from './ProtectedRoute';
 const router = [
   {
     path: "/login",
-    element: <LoginPage />, // Add LoginPage route
+    element: <LoginPage />,
   },
   {
     path: "/",
