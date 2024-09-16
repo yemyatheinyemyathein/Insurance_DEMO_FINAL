@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
 
@@ -15,6 +14,21 @@ interface FormData {
   amount: string;
 }
 
+interface Option {
+  value: string;
+  text: string;
+}
+
+interface Field {
+  label: string;
+  type: string;
+  name: string;  // Ensure this is keyof FormData
+  placeholder?: string;
+  value?: string;
+  readOnly?: boolean;
+  options?: Option[];
+}
+
 const ProductCalculation = () => {
   const [formData, setFormData] = useState<FormData>({
     agentName: "",
@@ -29,8 +43,8 @@ const ProductCalculation = () => {
     amount: "",
   });
 
-  const [yearPlanOptions, setYearPlanOptions] = useState<{ value: string; text: string }[]>([]);
-  const [productModeOptions, setProductModeOptions] = useState<{ value: string; text: string }[]>([]);
+  const [yearPlanOptions, setYearPlanOptions] = useState<Option[]>([]);
+  const [productModeOptions, setProductModeOptions] = useState<Option[]>([]);
 
   const productModeOptionsType1 = [
     { value: "sa", text: "SA" },
@@ -184,7 +198,7 @@ const ProductCalculation = () => {
     exit: { opacity: 0, x: -20 },
   };
 
-  const fields = [
+  const fields: Field[] = [
     { label: "Agent Name", type: "text", name: "agentName", placeholder: "Type Your Name" },
     { label: "Customer Name", type: "text", name: "customerName", placeholder: "Type Your Name" },
     { label: "DOB", type: "date", name: "dob" },
@@ -214,7 +228,7 @@ const ProductCalculation = () => {
     { label: "SI Amount", type: "number", name: "amount" },
   ];
 
-  const renderFields = (fields: any[]) => {
+  const renderFields = (fields: Field[]) => {
     return fields.map((field, index) => (
       <motion.div
         key={index}
@@ -225,50 +239,41 @@ const ProductCalculation = () => {
         transition={{ duration: 0.5, delay: index * 0.2 }}
         variants={inputVariants}
       >
-        <div className={`w-full ${field.type === "select" ? "md:w-1/2 px-2" : "md:w-1/2 px-2"}`}>
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            {field.label}
-          </label>
-          {field.type === "select" ? (
-            <select
-              name={field.name}
-              value={formData[field.name as keyof FormData]}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-              {field.options?.map((option: any) => (
-                <option key={option.value} value={option.value}>
-                  {option.text}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type={field.type}
-              name={field.name}
-              value={field.value || formData[field.name as keyof FormData]}
-              onChange={handleChange}
-              readOnly={field.readOnly}
-              placeholder={field.placeholder}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          )}
-        </div>
+        <label className="block text-sm font-medium text-gray-700 w-1/3">{field.label}</label>
+        {field.type === "select" ? (
+          <select
+            name={field.name}
+            className="w-2/3 border rounded px-3 py-2"
+            value={formData[field.name as keyof FormData] || ""}
+            onChange={handleChange}
+          >
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.text}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={field.type}
+            name={field.name}
+            placeholder={field.placeholder}
+            value={formData[field.name as keyof FormData] || ""}
+            onChange={handleChange}
+            readOnly={field.readOnly}
+            className="w-2/3 border rounded px-3 py-2"
+          />
+        )}
       </motion.div>
     ));
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto p-4">
+    <form onSubmit={handleSubmit}>
       {renderFields(fields)}
-      <div className="flex justify-center mt-6">
-        <button
-          type="submit"
-          className="px-6 py-3 bg-green-500 text-white font-semibold rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-        >
-          Calculate
-        </button>
-      </div>
+      <button type="submit" className="mt-4 bg-blue-500 text-white py-2 px-4 rounded">
+        Calculate
+      </button>
     </form>
   );
 };
