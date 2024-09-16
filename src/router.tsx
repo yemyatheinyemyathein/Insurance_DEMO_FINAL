@@ -21,6 +21,18 @@ const router = [
         path: "/doubleFlexi",
         element: <ProtectedRoute element={<ProductCalculation />} />,
       },
+      {
+        path: "/flexiHealth",
+        element: <ProtectedRoute element={<ProductCalculation />} />,
+      },
+      {
+        path: "/ste",
+        element: <ProtectedRoute element={<ProductCalculation />} />,
+      },
+      {
+        path: "/studentLife",
+        element: <ProtectedRoute element={<ProductCalculation />} />,
+      },
     ],
   },
 ];
