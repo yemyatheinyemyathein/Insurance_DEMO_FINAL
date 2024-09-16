@@ -1,35 +1,43 @@
 import ProductCardSlider from "../components/Home/ProductCard";
+import Product from "../assets/Home/product.jpg"
 
 const HomePage = () => {
   const products = [
     {
-      name: 'Product 1',
-      description: 'This is a brief description of product 1.',
-      link: '/product/1'
+      name: "Double Flexi",
+      description:
+        "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Obcaecati, officiis. Magnam dolorem officiis exercitationem incidunt, perspiciatis ducimus eaque! Voluptate voluptatum dicta enim magnam sapiente fuga facere impedit id aliquid itaque? ",
+      link: "/doubleFlexi",
+      img: Product
     },
     {
-      name: 'Product 2',
-      description: 'This is a brief description of product 2.',
-      link: '/product/2'
+      name: "Flexi Health",
+      description:
+        "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Obcaecati, officiis. Magnam dolorem officiis exercitationem incidunt, perspiciatis ducimus eaque! Voluptate voluptatum dicta enim magnam sapiente fuga facere impedit id aliquid itaque?",
+      link: "/flexiHealth",
+      img: Product
     },
     {
-      name: 'Product 3',
-      description: 'This is a brief description of product 3.',
-      link: '/product/3'
+      name: "STE",
+      description:
+        "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Obcaecati, officiis. Magnam dolorem officiis exercitationem incidunt, perspiciatis ducimus eaque! Voluptate voluptatum dicta enim magnam sapiente fuga facere impedit id aliquid itaque?",
+      link: "/ste",
+      img: Product
     },
     {
-      name: 'Product 4',
-      description: 'This is a brief description of product 3.',
-      link: '/product/3'
+      name: "Student Life",
+      description:
+        "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Obcaecati, officiis. Magnam dolorem officiis exercitationem incidunt, perspiciatis ducimus eaque! Voluptate voluptatum dicta enim magnam sapiente fuga facere impedit id aliquid itaque?",
+      link: "/studentLife",
+      img: Product
     },
   ];
 
-
   return (
-    <div className="min-h-[70vh] flex flex-col justify-center ">
+    <div className="flex flex-col justify-center my-4">
       <ProductCardSlider products={products} />
     </div>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

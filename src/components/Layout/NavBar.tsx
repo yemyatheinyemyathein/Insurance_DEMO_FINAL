@@ -28,8 +28,8 @@ const NavBar = () => {
       <nav
         className={`fixed top-0 w-full z-50 ${
           isScrolled
-            ? "bg-gradient-to-r from-blue-200 to-sky-500 shadow-lg"
-            : "bg-gradient-to-r from-white to-sky-400"
+            ? "bg-gradient-to-r from-blue-300 to-sky-500 shadow-lg"
+            : "bg-gradient-to-r from-indigo-100 to-sky-400"
         } transition-all duration-300 ease-in-out`}
       >
         <div className="flex justify-between items-center py-2 px-6">
@@ -37,7 +37,7 @@ const NavBar = () => {
             <img src={Logo} alt="logo" className="w-14 h-14" />
             <span
               className={`${isScrolled ? "text-white" : "text-sky-500"}`}
-              style={{ textShadow: "10px 7px 5px skyblue" }}
+              style={{ textShadow: "10px 7px 1px skyblue" }}
             >
               Insurance
             </span>
