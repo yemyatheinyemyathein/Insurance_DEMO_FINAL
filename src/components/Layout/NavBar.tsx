@@ -28,13 +28,13 @@ const NavBar = () => {
       <nav
         className={`fixed top-0 w-full z-50 ${
           isScrolled
-            ? "bg-gradient-to-r from-blue-300 to-sky-500 shadow-lg"
+            ? "bg-gradient-to-r from-blue-200 to-sky-500 shadow-lg"
             : "bg-gradient-to-r from-indigo-100 to-sky-400"
         } transition-all duration-300 ease-in-out`}
       >
         <div className="flex justify-between items-center py-2 px-6">
-          <div className="flex justify-center items-center gap-4 text-3xl font-bold text-white">
-            <img src={Logo} alt="logo" className="w-14 h-14" />
+          <div className="flex justify-center items-center gap-4 text-3xl font-bold ">
+            <img src={Logo} alt="logo" className="w-14 h-14 shadow-lg shadow-white rounded-full" />
             <span
               className={`${isScrolled ? "text-white" : "text-sky-500"}`}
               style={{ textShadow: "10px 7px 1px skyblue" }}
