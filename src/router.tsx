@@ -2,7 +2,7 @@ import HomePage from "./App/HomePage";
 import MainLayout from "./components/Layout/MainLayout";
 import LoginPage from "./App/LoginPage";
 import ProtectedRoute from './ProtectedRoute';
-import ProductCalculation from "./components/Home/ProductCalculation";
+import STE from "./components/Home/STE";
 
 const router = [
   {
@@ -19,19 +19,19 @@ const router = [
       },
       {
         path: "/doubleFlexi",
-        element: <ProtectedRoute element={<ProductCalculation />} />,
+        element: <ProtectedRoute element={<STE />} />,
       },
       {
         path: "/flexiHealth",
-        element: <ProtectedRoute element={<ProductCalculation />} />,
+        element: <ProtectedRoute element={<STE />} />,
       },
       {
         path: "/ste",
-        element: <ProtectedRoute element={<ProductCalculation />} />,
+        element: <ProtectedRoute element={<STE />} />,
       },
       {
         path: "/studentLife",
-        element: <ProtectedRoute element={<ProductCalculation />} />,
+        element: <ProtectedRoute element={<STE />} />,
       },
     ],
   },

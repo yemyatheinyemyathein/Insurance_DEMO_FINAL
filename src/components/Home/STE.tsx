@@ -1,5 +1,6 @@
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Notifications } from "@mantine/notifications";
 
 interface FormData {
   agentName: string;
@@ -22,14 +23,14 @@ interface Option {
 interface Field {
   label: string;
   type: string;
-  name: string;  // Ensure this is keyof FormData
+  name: string;
   placeholder?: string;
   value?: string;
   readOnly?: boolean;
   options?: Option[];
 }
 
-const ProductCalculation = () => {
+const STE = () => {
   const [formData, setFormData] = useState<FormData>({
     agentName: "",
     customerName: "",
@@ -53,89 +54,55 @@ const ProductCalculation = () => {
   const productModeOptionsType2 = [{ value: "sa", text: "SA" }];
 
   useEffect(() => {
-    switch (formData.product) {
-      case "0":
-        setYearPlanOptions([
-          { value: "5", text: "5" },
-          { value: "10", text: "10" },
-          { value: "15", text: "15" },
-        ]);
-        setProductModeOptions(productModeOptionsType1);
-        break;
-      case "1":
-        setYearPlanOptions(
-          Array.from({ length: 20 }, (_, i) => ({
-            value: (i + 1).toString(),
-            text: (i + 1).toString(),
-          }))
-        );
-        setProductModeOptions(productModeOptionsType1);
-        break;
-      case "2":
-        setYearPlanOptions([
-          { value: "5", text: "5" },
-          { value: "7", text: "7" },
-          { value: "10", text: "10" },
-        ]);
-        setProductModeOptions(productModeOptionsType2);
-        break;
-      case "3":
-        if (formData.term === "0") {
-          setYearPlanOptions(
-            Array.from({ length: 12 }, (_, i) => ({
-              value: (i + 8).toString(),
-              text: (i + 8).toString(),
-            }))
-          );
-        } else {
-          setYearPlanOptions(
-            Array.from({ length: 12 }, (_, i) => ({
-              value: (i + 5).toString(),
-              text: (i + 5).toString(),
-            }))
-          );
-        }
-        setProductModeOptions(productModeOptionsType2);
-        break;
-      default:
-        setYearPlanOptions([{ value: "", text: "Select plan" }]);
-        setProductModeOptions(productModeOptionsType1);
-        break;
-    }
-  }, [formData.product, formData.term]);
+    const getYearPlanAndProductOptions = () => {
+      const age = parseInt(formData.age);
 
-  useEffect(() => {
-    if (formData.product === "3") {
-      switch (formData.term) {
+      switch (formData.product) {
         case "0":
-          setYearPlanOptions(
-            Array.from({ length: 12 }, (_, i) => ({
-              value: (i + 8).toString(),
-              text: (i + 8).toString(),
-            }))
-          );
-          break;
         case "1":
-          setYearPlanOptions(
-            Array.from({ length: 12 }, (_, i) => ({
-              value: (i + 5).toString(),
-              text: (i + 5).toString(),
-            }))
-          );
+        case "2":
+          setYearPlanOptions([
+            { value: "5", text: "5" },
+            { value: "7", text: "7" },
+            { value: "10", text: "10" },
+          ]);
+          setProductModeOptions(productModeOptionsType1);
           break;
+        case "3":
+          { let yearPlans;
+          if (age >= 56 && age <= 58) {
+            yearPlans = [{ value: "7", text: "7" }];
+          } else if (age >= 59 && age <= 60) {
+            yearPlans = [{ value: "5", text: "5" }];
+          } else {
+            yearPlans = [
+              { value: "5", text: "5" },
+              { value: "7", text: "7" },
+              { value: "10", text: "10" },
+            ];
+          }
+          setYearPlanOptions(yearPlans);
+          setProductModeOptions(productModeOptionsType2);
+          break; }
         default:
+          setYearPlanOptions([{ value: "", text: "Select plan" }]);
+          setProductModeOptions(productModeOptionsType1);
           break;
       }
-    }
-  }, [formData.term]);
+    };
+    getYearPlanAndProductOptions();
+  }, [formData.product, formData.age]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    // Update form data
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
 
+    // Calculate age if DOB changes
     if (name === "dob") {
       calculateAge(value);
     }
@@ -148,13 +115,33 @@ const ProductCalculation = () => {
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDifference = today.getMonth() - birthDate.getMonth();
     const dayDifference = today.getDate() - birthDate.getDate();
+
     if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
       age--;
     }
+
+    // If age below 10 or above 60, show notification
+    if (age < 10 || age > 60) {
+      alert("Age musg be between 10 and 60")
+      Notifications.show({
+        title: "Age Restriction",
+        message: "Age must be between 10 and 60",
+        color: "red",
+      });
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       age: age.toString(),
     }));
+  };
+
+  const validateSIAmount = (value: string) => {
+    const amount = parseInt(value);
+    if (amount < 1000000 || amount > 50000000) {
+      return false;
+    }
+    return true;
   };
 
   const calculateSIAmount = (): number | null => {
@@ -164,32 +151,29 @@ const ProductCalculation = () => {
 
     if (!siAmount || !planValue) return null;
 
-    let calculatedValue: number;
+    const factorMap = {
+      "0": 1,
+      "1": 12,
+      "2": 3,
+      "3": 6,
+    };
 
-    switch (paymentMode) {
-      case "0":
-        calculatedValue = Math.round(siAmount / planValue);
-        break;
-      case "1":
-        calculatedValue = Math.round(siAmount / (planValue * 12));
-        break;
-      case "2":
-        calculatedValue = Math.round(siAmount / (planValue * 4));
-        break;
-      case "3":
-        calculatedValue = Math.round(siAmount / (planValue * 6));
-        break;
-      default:
-        calculatedValue = 0;
-    }
-
-    return calculatedValue;
+    return Math.round(siAmount / (planValue * (factorMap[paymentMode] || 1)));
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+
     const result = calculateSIAmount();
-    console.log("Calculated Value:", result);
+    if (result === null) {
+      Notifications.show({
+        title: "Calculation Error",
+        message: "Please ensure all fields are filled correctly.",
+        color: "red",
+      });
+    } else {
+      console.log("Calculated Value:", result);
+    }
   };
 
   const inputVariants = {
@@ -206,14 +190,14 @@ const ProductCalculation = () => {
     { label: "Product", type: "select", name: "product", options: [
       { value: "", text: "Select Product" },
       { value: "0", text: "Double Flexi" },
-      { value: "1", text: "Flexi health" },
+      { value: "1", text: "Flexi Health" },
       { value: "2", text: "STE" },
-      { value: "3", text: "Student life" },
+      { value: "3", text: "Student Life" },
     ]},
     ...(formData.product === "3" ? [
       { label: "Term", type: "select", name: "term", options: [
         { value: "0", text: "Premium Term" },
-        { value: "1", text: "Policy Term" }
+        { value: "1", text: "Policy Term" },
       ]},
     ] : []),
     { label: "Payment Mode", type: "select", name: "paymentMode", options: [
@@ -232,18 +216,18 @@ const ProductCalculation = () => {
     return fields.map((field, index) => (
       <motion.div
         key={index}
-        className={`my-4 w-full flex ${field.type === "select" ? "flex -mx-2" : "flex"}`}
+        className="my-4 w-full"
         initial="hidden"
         animate="visible"
         exit="exit"
         transition={{ duration: 0.5, delay: index * 0.2 }}
         variants={inputVariants}
       >
-        <label className="block text-sm font-medium text-gray-700 w-1/3">{field.label}</label>
+        <label className="block text-sm font-medium text-gray-700">{field.label}</label>
         {field.type === "select" ? (
           <select
             name={field.name}
-            className="w-2/3 border rounded px-3 py-2"
+            className="w-full md:w-2/3 border rounded px-3 py-2"
             value={formData[field.name as keyof FormData] || ""}
             onChange={handleChange}
           >
@@ -257,11 +241,11 @@ const ProductCalculation = () => {
           <input
             type={field.type}
             name={field.name}
+            value={field.value || formData[field.name as keyof FormData]}
             placeholder={field.placeholder}
-            value={formData[field.name as keyof FormData] || ""}
-            onChange={handleChange}
+            className="w-full md:w-2/3 border rounded px-3 py-2"
             readOnly={field.readOnly}
-            className="w-2/3 border rounded px-3 py-2"
+            onChange={handleChange}
           />
         )}
       </motion.div>
@@ -269,13 +253,19 @@ const ProductCalculation = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="p-4">
       {renderFields(fields)}
-      <button type="submit" className="mt-4 bg-blue-500 text-white py-2 px-4 rounded">
-        Calculate
-      </button>
+      <motion.button
+        type="submit"
+        className="px-4 py-2 bg-green-500 text-white rounded"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        Submit
+      </motion.button>
     </form>
   );
 };
 
-export default ProductCalculation;
+export default STE;
