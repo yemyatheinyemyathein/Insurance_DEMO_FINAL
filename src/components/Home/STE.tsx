@@ -1,6 +1,7 @@
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Notifications } from "@mantine/notifications";
+import { useLocation } from "react-router-dom";
+import { notifications } from "@mantine/notifications";
 
 interface FormData {
   agentName: string;
@@ -31,6 +32,7 @@ interface Field {
 }
 
 const STE = () => {
+  const location = useLocation();  // Get current route location
   const [formData, setFormData] = useState<FormData>({
     agentName: "",
     customerName: "",
@@ -54,22 +56,29 @@ const STE = () => {
   const productModeOptionsType2 = [{ value: "sa", text: "SA" }];
 
   useEffect(() => {
+    const routeToProductMap: { [key: string]: string } = {
+      "/doubleFlexi": "0",
+      "/flexiHealth": "1",
+      "/ste": "2",
+      "/studentLife": "3",
+    };
+
+    const currentPath = location.pathname;
+    const productValue = routeToProductMap[currentPath] || "";
+    
+    setFormData((prevData) => ({
+      ...prevData,
+      product: productValue,
+    }));
+  }, [location.pathname]);
+
+  useEffect(() => {
     const getYearPlanAndProductOptions = () => {
       const age = parseInt(formData.age);
 
       switch (formData.product) {
-        case "0":
-        case "1":
-        case "2":
-          setYearPlanOptions([
-            { value: "5", text: "5" },
-            { value: "7", text: "7" },
-            { value: "10", text: "10" },
-          ]);
-          setProductModeOptions(productModeOptionsType1);
-          break;
-        case "3":
-          { let yearPlans;
+        case "2": {
+          let yearPlans;
           if (age >= 56 && age <= 58) {
             yearPlans = [{ value: "7", text: "7" }];
           } else if (age >= 59 && age <= 60) {
@@ -82,8 +91,9 @@ const STE = () => {
             ];
           }
           setYearPlanOptions(yearPlans);
-          setProductModeOptions(productModeOptionsType2);
-          break; }
+          setProductModeOptions(productModeOptionsType1);
+          break;
+        }
         default:
           setYearPlanOptions([{ value: "", text: "Select plan" }]);
           setProductModeOptions(productModeOptionsType1);
@@ -96,15 +106,17 @@ const STE = () => {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    // Update form data
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
 
-    // Calculate age if DOB changes
     if (name === "dob") {
       calculateAge(value);
+    }
+
+    if (name === "amount") {
+      validateSIAmount(value);
     }
   };
 
@@ -116,14 +128,16 @@ const STE = () => {
     const monthDifference = today.getMonth() - birthDate.getMonth();
     const dayDifference = today.getDate() - birthDate.getDate();
 
+    if (monthDifference > 0 || (monthDifference === 0 && dayDifference > 0)) {
+      age++;
+    }
     if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
       age--;
     }
 
-    // If age below 10 or above 60, show notification
     if (age < 10 || age > 60) {
-      alert("Age musg be between 10 and 60")
-      Notifications.show({
+      alert("Age must be between 10 and 60");
+      notifications.show({
         title: "Age Restriction",
         message: "Age must be between 10 and 60",
         color: "red",
@@ -139,9 +153,13 @@ const STE = () => {
   const validateSIAmount = (value: string) => {
     const amount = parseInt(value);
     if (amount < 1000000 || amount > 50000000) {
-      return false;
+      alert("Amount must be between 10 lakh to 500 lakh");
+      notifications.show({
+        title: "Amount Restriction",
+        message: "Amount must be between 10 lakh to 500 lakh",
+        color: "red",
+      });
     }
-    return true;
   };
 
   const calculateSIAmount = (): number | null => {
@@ -166,7 +184,7 @@ const STE = () => {
 
     const result = calculateSIAmount();
     if (result === null) {
-      Notifications.show({
+      notifications.show({
         title: "Calculation Error",
         message: "Please ensure all fields are filled correctly.",
         color: "red",
@@ -187,13 +205,6 @@ const STE = () => {
     { label: "Customer Name", type: "text", name: "customerName", placeholder: "Type Your Name" },
     { label: "DOB", type: "date", name: "dob" },
     { label: "Age", type: "text", name: "age", value: formData.age, readOnly: true },
-    { label: "Product", type: "select", name: "product", options: [
-      { value: "", text: "Select Product" },
-      { value: "0", text: "Double Flexi" },
-      { value: "1", text: "Flexi Health" },
-      { value: "2", text: "STE" },
-      { value: "3", text: "Student Life" },
-    ]},
     ...(formData.product === "3" ? [
       { label: "Term", type: "select", name: "term", options: [
         { value: "0", text: "Premium Term" },
@@ -227,9 +238,9 @@ const STE = () => {
         {field.type === "select" ? (
           <select
             name={field.name}
-            className="w-full md:w-2/3 border rounded px-3 py-2"
-            value={formData[field.name as keyof FormData] || ""}
+            value={formData[field.name as keyof FormData]}
             onChange={handleChange}
+            className="block w-full px-3 py-2 mt-1 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
           >
             {field.options?.map((option) => (
               <option key={option.value} value={option.value}>
@@ -242,10 +253,10 @@ const STE = () => {
             type={field.type}
             name={field.name}
             value={field.value || formData[field.name as keyof FormData]}
-            placeholder={field.placeholder}
-            className="w-full md:w-2/3 border rounded px-3 py-2"
-            readOnly={field.readOnly}
             onChange={handleChange}
+            readOnly={field.readOnly}
+            placeholder={field.placeholder}
+            className="block w-full px-3 py-2 mt-1 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
           />
         )}
       </motion.div>
@@ -253,18 +264,25 @@ const STE = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
-      {renderFields(fields)}
-      <motion.button
-        type="submit"
-        className="px-4 py-2 bg-green-500 text-white rounded"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        Submit
-      </motion.button>
-    </form>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">STE Insurance Form</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {renderFields(fields)}
+        <motion.div
+          className="mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <button
+            type="submit"
+            className="w-full px-4 py-2 font-bold text-white bg-primary hover:bg-primary-dark rounded-md shadow-lg"
+          >
+            Calculate
+          </button>
+        </motion.div>
+      </form>
+    </div>
   );
 };
 
