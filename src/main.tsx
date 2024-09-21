@@ -17,9 +17,7 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-       <MantineProvider
-      withGlobalStyles
-      withNormalizeCSS>
+       <MantineProvider>
         <Notifications position="bottom-right" />
         <AuthProvider> 
           <BrowserRouter>

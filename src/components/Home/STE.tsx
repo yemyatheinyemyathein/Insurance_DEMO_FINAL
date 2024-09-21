@@ -1,7 +1,15 @@
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { notifications } from "@mantine/notifications";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const formatNumber = (value: string): string => {
+  const numberValue = value.replace(/,/g, "");
+  if (isNaN(Number(numberValue))) return value;
+
+  return new Intl.NumberFormat("en-US").format(Number(numberValue));
+};
 
 interface FormData {
   agentName: string;
@@ -32,7 +40,7 @@ interface Field {
 }
 
 const STE = () => {
-  const location = useLocation();  // Get current route location
+  const location = useLocation();
   const [formData, setFormData] = useState<FormData>({
     agentName: "",
     customerName: "",
@@ -43,17 +51,18 @@ const STE = () => {
     paymentMode: "",
     calculationMode: "",
     yearPlan: "",
-    amount: "",
+    amount: formatNumber("1000000"),
   });
 
   const [yearPlanOptions, setYearPlanOptions] = useState<Option[]>([]);
   const [productModeOptions, setProductModeOptions] = useState<Option[]>([]);
 
   const productModeOptionsType1 = [
+    { value: "", text: "Select Calculation Mode" },
     { value: "sa", text: "SA" },
     { value: "ap", text: "AP" },
   ];
-  const productModeOptionsType2 = [{ value: "sa", text: "SA" }];
+  const productModeOptionsType2 = [ { value: "", text: "Select Calculation Mode" },{ value: "sa", text: "SA" }];
 
   useEffect(() => {
     const routeToProductMap: { [key: string]: string } = {
@@ -65,7 +74,7 @@ const STE = () => {
 
     const currentPath = location.pathname;
     const productValue = routeToProductMap[currentPath] || "";
-    
+
     setFormData((prevData) => ({
       ...prevData,
       product: productValue,
@@ -85,13 +94,14 @@ const STE = () => {
             yearPlans = [{ value: "5", text: "5" }];
           } else {
             yearPlans = [
+              { value: "", text: "Select Year Plan" },
               { value: "5", text: "5" },
               { value: "7", text: "7" },
               { value: "10", text: "10" },
             ];
           }
           setYearPlanOptions(yearPlans);
-          setProductModeOptions(productModeOptionsType1);
+          setProductModeOptions(productModeOptionsType2);
           break;
         }
         default:
@@ -103,12 +113,14 @@ const STE = () => {
     getYearPlanAndProductOptions();
   }, [formData.product, formData.age]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
 
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value,
+      [name]: name === "amount" ? formatNumber(value) : value,
     }));
 
     if (name === "dob") {
@@ -136,12 +148,7 @@ const STE = () => {
     }
 
     if (age < 10 || age > 60) {
-      alert("Age must be between 10 and 60");
-      notifications.show({
-        title: "Age Restriction",
-        message: "Age must be between 10 and 60",
-        color: "red",
-      });
+      toast.error("Age must be between 10 and 60");
     }
 
     setFormData((prevData) => ({
@@ -151,47 +158,46 @@ const STE = () => {
   };
 
   const validateSIAmount = (value: string) => {
-    const amount = parseInt(value);
+    const amount = parseInt(value.replace(/,/g, ""));
     if (amount < 1000000 || amount > 50000000) {
-      alert("Amount must be between 10 lakh to 500 lakh");
-      notifications.show({
-        title: "Amount Restriction",
-        message: "Amount must be between 10 lakh to 500 lakh",
-        color: "red",
-      });
+      toast.error("Amount must be between 10 lakh to 500 lakh");
     }
   };
 
   const calculateSIAmount = (): number | null => {
     const { amount, paymentMode, yearPlan } = formData;
-    const siAmount = parseInt(amount);
-    const planValue = parseInt(yearPlan);
-
-    if (!siAmount || !planValue) return null;
-
-    const factorMap = {
+    if (!amount || !paymentMode || !yearPlan) {
+      return null;
+    }
+    const siAmount = parseInt(amount.replace(/,/g, ""), 10);
+    const planValue = parseInt(yearPlan, 10);
+    if (isNaN(siAmount) || isNaN(planValue)) {
+      return null;
+    }
+    const factorMap: { [key: string]: number } = {
       "0": 1,
       "1": 12,
       "2": 3,
       "3": 6,
     };
-
-    return Math.round(siAmount / (planValue * (factorMap[paymentMode] || 1)));
+    const factor = factorMap[paymentMode];
+    if (!factor) {
+      return null;
+    }
+    return Math.round(siAmount / (planValue * factor));
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-
     const result = calculateSIAmount();
     if (result === null) {
-      notifications.show({
-        title: "Calculation Error",
-        message: "Please ensure all fields are filled correctly.",
-        color: "red",
-      });
+      toast.error("Please ensure all fields are filled correctly.");
     } else {
-      console.log("Calculated Value:", result);
+      toast.success(
+        `Calculated Value: ${new Intl.NumberFormat("en-US").format(result)}`
+      );
     }
+    console.log("Calculated Value:", result);
   };
 
   const inputVariants = {
@@ -201,88 +207,136 @@ const STE = () => {
   };
 
   const fields: Field[] = [
-    { label: "Agent Name", type: "text", name: "agentName", placeholder: "Type Your Name" },
-    { label: "Customer Name", type: "text", name: "customerName", placeholder: "Type Your Name" },
+    {
+      label: "Agent Name",
+      type: "text",
+      name: "agentName",
+      placeholder: "Type Your Name",
+    },
+    {
+      label: "Customer Name",
+      type: "text",
+      name: "customerName",
+      placeholder: "Type Your Name",
+    },
     { label: "DOB", type: "date", name: "dob" },
-    { label: "Age", type: "text", name: "age", value: formData.age, readOnly: true },
-    ...(formData.product === "3" ? [
-      { label: "Term", type: "select", name: "term", options: [
-        { value: "0", text: "Premium Term" },
-        { value: "1", text: "Policy Term" },
-      ]},
-    ] : []),
-    { label: "Payment Mode", type: "select", name: "paymentMode", options: [
-      { value: "", text: "Select Payment Mode" },
-      { value: "0", text: "Annual" },
-      { value: "1", text: "Monthly" },
-      { value: "2", text: "Quarterly" },
-      { value: "3", text: "Semi" },
-    ]},
-    { label: "Calculation Mode", type: "select", name: "calculationMode", options: productModeOptions },
-    { label: "Year Plan", type: "select", name: "yearPlan", options: yearPlanOptions },
-    { label: "SI Amount", type: "number", name: "amount" },
+    {
+      label: "Age",
+      type: "text",
+      name: "age",
+      value: formData.age,
+      readOnly: true,
+    },
+    ...(formData.product === "3"
+      ? [
+          {
+            label: "Term",
+            type: "select",
+            name: "term",
+            options: [
+              { value: "0", text: "Premium Term" },
+              { value: "1", text: "Policy Term" },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: "Payment Mode",
+      type: "select",
+      name: "paymentMode",
+      options: [
+        { value: "", text: "Select Payment Mode" },
+        { value: "0", text: "Annual" },
+        { value: "1", text: "Monthly" },
+        { value: "2", text: "Quarterly" },
+        { value: "3", text: "Semi" },
+      ],
+    },
+    {
+      label: "Calculation Mode",
+      type: "select",
+      name: "calculationMode",
+      options: productModeOptions,
+    },
+    {
+      label: "Year Plan",
+      type: "select",
+      name: "yearPlan",
+      options: yearPlanOptions,
+    },
+    {
+      label: "SI Amount",
+      type: "text",
+      name: "amount",
+      placeholder: "Enter SI Amount",
+    },
   ];
 
   const renderFields = (fields: Field[]) => {
-    return fields.map((field, index) => (
-      <motion.div
-        key={index}
-        className="my-4 w-full"
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        transition={{ duration: 0.5, delay: index * 0.2 }}
-        variants={inputVariants}
-      >
-        <label className="block text-sm font-medium text-gray-700">{field.label}</label>
-        {field.type === "select" ? (
-          <select
-            name={field.name}
-            value={formData[field.name as keyof FormData]}
-            onChange={handleChange}
-            className="block w-full px-3 py-2 mt-1 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {fields.map((field, index) => (
+          <motion.div
+            key={index}
+            className="my-2 w-full"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={inputVariants}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.text}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <input
-            type={field.type}
-            name={field.name}
-            value={field.value || formData[field.name as keyof FormData]}
-            onChange={handleChange}
-            readOnly={field.readOnly}
-            placeholder={field.placeholder}
-            className="block w-full px-3 py-2 mt-1 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-          />
-        )}
-      </motion.div>
-    ));
+            <label className="block mb-1 text-sm font-medium">{field.label}</label>
+            {field.type === "select" ? (
+              <select
+                name={field.name}
+                value={formData[field.name as keyof FormData]}
+                onChange={handleChange}
+                className="block w-full px-3 py-2 mt-1 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              >
+                {field.options?.map((option, i) => (
+                  <option key={i} value={option.value}>
+                    {option.text}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type={field.type}
+                name={field.name}
+                value={formData[field.name as keyof FormData]}
+                onChange={handleChange}
+                placeholder={field.placeholder}
+                readOnly={field.readOnly}
+                className="block w-full px-3 py-2 mt-1 text-sm border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              />
+            )}
+          </motion.div>
+        ))}
+      </div>
+    );
   };
+  
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">STE Insurance Form</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1 }}
+      className="p-4"
+    >
+      <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6">
         {renderFields(fields)}
-        <motion.div
-          className="mt-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
+        <motion.button
+          type="submit"
+          className="block w-full px-4 py-2 text-white bg-sky-500 rounded hover:bg-sky-600"
+          whileHover={{ scale: 1.05 }}
         >
-          <button
-            type="submit"
-            className="w-full px-4 py-2 font-bold text-white bg-primary hover:bg-primary-dark rounded-md shadow-lg"
-          >
-            Calculate
-          </button>
-        </motion.div>
+          Calculate
+        </motion.button>
       </form>
-    </div>
+      <ToastContainer />
+    </motion.div>
   );
 };
 
