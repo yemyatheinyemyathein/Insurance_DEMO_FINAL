@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import STEShowUpTbl from "./STEShowUpTbl";
 
 const formatNumber = (value: string): string => {
   const numberValue = value.replace(/,/g, "");
@@ -22,6 +23,13 @@ interface FormData {
   calculationMode: string;
   yearPlan: string;
   amount: string;
+}
+
+interface CalculatedValues {
+  annual: number | null;
+  monthly: number | null;
+  quarterly: number | null;
+  semi: number | null;
 }
 
 interface Option {
@@ -53,7 +61,12 @@ const STE = () => {
     yearPlan: "",
     amount: formatNumber("1000000"),
   });
-
+  const [calculatedValues, setCalculatedValues] = useState<CalculatedValues>({
+    annual: null,
+    monthly: null,
+    quarterly: null,
+    semi: null,
+  });
   const [yearPlanOptions, setYearPlanOptions] = useState<Option[]>([]);
   const [productModeOptions, setProductModeOptions] = useState<Option[]>([]);
 
@@ -62,7 +75,10 @@ const STE = () => {
     { value: "sa", text: "SA" },
     { value: "ap", text: "AP" },
   ];
-  const productModeOptionsType2 = [ { value: "", text: "Select Calculation Mode" },{ value: "sa", text: "SA" }];
+  const productModeOptionsType2 = [
+    { value: "", text: "Select Calculation Mode" },
+    { value: "sa", text: "SA" },
+  ];
 
   useEffect(() => {
     const routeToProductMap: { [key: string]: string } = {
@@ -89,9 +105,15 @@ const STE = () => {
         case "2": {
           let yearPlans;
           if (age >= 56 && age <= 58) {
-            yearPlans = [{ value: "7", text: "7" }];
+            yearPlans = [
+              { value: "", text: "Select Year Plan" },
+              { value: "7", text: "7" },
+            ];
           } else if (age >= 59 && age <= 60) {
-            yearPlans = [{ value: "5", text: "5" }];
+            yearPlans = [
+              { value: "", text: "Select Year Plan" },
+              { value: "5", text: "5" },
+            ];
           } else {
             yearPlans = [
               { value: "", text: "Select Year Plan" },
@@ -164,41 +186,82 @@ const STE = () => {
     }
   };
 
-  const calculateSIAmount = (): number | null => {
-    const { amount, paymentMode, yearPlan } = formData;
-    if (!amount || !paymentMode || !yearPlan) {
-      return null;
+  const calculateSIAmounts = (): { [key: string]: number | null } => {
+    const { amount, yearPlan } = formData;
+    if (!amount || !yearPlan) {
+      return { annual: null, monthly: null, quarterly: null, semi: null };
     }
+  
     const siAmount = parseInt(amount.replace(/,/g, ""), 10);
     const planValue = parseInt(yearPlan, 10);
     if (isNaN(siAmount) || isNaN(planValue)) {
-      return null;
+      return { annual: null, monthly: null, quarterly: null, semi: null };
     }
-    const factorMap: { [key: string]: number } = {
-      "0": 1,
-      "1": 12,
-      "2": 3,
-      "3": 6,
+  
+    const factors: { [key: string]: number } = {
+      annual: 1,
+      monthly: 12,
+      quarterly: 3,
+      semi: 6,
     };
-    const factor = factorMap[paymentMode];
-    if (!factor) {
-      return null;
-    }
-    return Math.round(siAmount / (planValue * factor));
+  
+    return {
+      annual: Math.round(siAmount / (planValue * factors.annual)),
+      monthly:
+        formData.paymentMode === "1"
+          ? Math.round(siAmount / (planValue * factors.monthly))
+          : null,
+      quarterly:
+        formData.paymentMode === "2"
+          ? Math.round(siAmount / (planValue * factors.quarterly))
+          : null,
+      semi:
+        formData.paymentMode === "3"
+          ? Math.round(siAmount / (planValue * factors.semi))
+          : null,
+    };
   };
-
+  
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const result = calculateSIAmount();
-    if (result === null) {
+    
+    const calculatedAmounts = calculateSIAmounts();
+    const { annual, monthly, quarterly, semi } = calculatedAmounts;
+  
+    if (annual === null) {
       toast.error("Please ensure all fields are filled correctly.");
-    } else {
-      toast.success(
-        `Calculated Value: ${new Intl.NumberFormat("en-US").format(result)}`
-      );
+      return;
     }
-    console.log("Calculated Value:", result);
+  
+    if (formData.paymentMode === "0") {
+      // For annual calculation, show the annual value
+      toast.success(
+        `Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(annual)}`
+      );
+    } else {
+      // For monthly, quarterly, and semi
+      const selectedMode =
+        formData.paymentMode === "1"
+          ? monthly
+          : formData.paymentMode === "2"
+          ? quarterly
+          : semi;
+  
+      if (selectedMode !== null) {
+        toast.success(
+          `Selected Mode Calculated Value: ${new Intl.NumberFormat("en-US").format(selectedMode)}`
+        );
+      }
+    }
+  
+    setCalculatedValues({
+      annual,
+      monthly,
+      quarterly,
+      semi,
+    });
   };
+  
 
   const inputVariants = {
     hidden: { opacity: 0, x: 20 },
@@ -285,7 +348,9 @@ const STE = () => {
             variants={inputVariants}
             transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            <label className="block mb-1 text-sm font-medium">{field.label}</label>
+            <label className="block mb-1 text-sm font-medium">
+              {field.label}
+            </label>
             {field.type === "select" ? (
               <select
                 name={field.name}
@@ -315,7 +380,6 @@ const STE = () => {
       </div>
     );
   };
-  
 
   return (
     <motion.div
@@ -336,7 +400,9 @@ const STE = () => {
         </motion.button>
       </form>
       <ToastContainer />
-    </motion.div>
+
+      <STEShowUpTbl selectedData={formData} calculatedValues={calculatedValues} />
+      </motion.div>
   );
 };
 
