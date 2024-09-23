@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import STEShowUpTbl from "./STEShowUpTbl";
+import { fixedValuesByAgeAndPlan } from "../../constants/fixedData";
 
 const formatNumber = (value: string): string => {
   const numberValue = value.replace(/,/g, "");
@@ -69,6 +70,7 @@ const STE = () => {
   });
   const [yearPlanOptions, setYearPlanOptions] = useState<Option[]>([]);
   const [productModeOptions, setProductModeOptions] = useState<Option[]>([]);
+  const [typingTimeout, setTypingTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const productModeOptionsType1 = [
     { value: "", text: "Select Calculation Mode" },
@@ -145,12 +147,19 @@ const STE = () => {
       [name]: name === "amount" ? formatNumber(value) : value,
     }));
 
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
     if (name === "dob") {
       calculateAge(value);
     }
 
-    if (name === "amount") {
-      validateSIAmount(value);
+    if (name === 'amount') {
+      const newTimeout = setTimeout(() => {
+        validateSIAmount(value);
+      }, 2000);
+      setTypingTimeout(newTimeout); 
     }
   };
 
@@ -185,46 +194,54 @@ const STE = () => {
       toast.error("Amount must be between 10 lakh to 500 lakh");
     }
   };
+  const amount = formData.amount;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        validateSIAmount(formData.amount);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [amount]);
+
+  const getFixedValueByAgeAndPlan = (age: number, yearPlan: string): number | null => {
+    if (age < 18 || age > 60) {
+        return null;
+    }
+    const ageRange = String(age);
+    const planValues = fixedValuesByAgeAndPlan[ageRange];
+    return planValues ? planValues[yearPlan] || null : null;
+};
 
   const calculateSIAmounts = (): { [key: string]: number | null } => {
-    const { amount, yearPlan } = formData;
-    if (!amount || !yearPlan) {
+    const { yearPlan, age } = formData;
+    const ageNum = parseInt(age);
+    if (!ageNum || !yearPlan) return { annual: null, monthly: null, quarterly: null, semi: null };
+  
+    const fixedValue = getFixedValueByAgeAndPlan(ageNum, yearPlan);
+    console.log("This is Fixed Values", fixedValue);
+    if (!fixedValue) {
+      toast.error("No fixed value found for the selected age and year plan.");
       return { annual: null, monthly: null, quarterly: null, semi: null };
     }
   
-    const siAmount = parseInt(amount.replace(/,/g, ""), 10);
-    const planValue = parseInt(yearPlan, 10);
-    if (isNaN(siAmount) || isNaN(planValue)) {
-      return { annual: null, monthly: null, quarterly: null, semi: null };
-    }
-  
-    const factors: { [key: string]: number } = {
-      annual: 1,
-      monthly: 12,
-      quarterly: 3,
+    const factors = {
+      annual: 12,
+      monthly: 1,
+      quarterly: 4,
       semi: 6,
     };
-  
-    return {
-      annual: Math.round(siAmount / (planValue * factors.annual)),
-      monthly:
-        formData.paymentMode === "1"
-          ? Math.round(siAmount / (planValue * factors.monthly))
-          : null,
-      quarterly:
-        formData.paymentMode === "2"
-          ? Math.round(siAmount / (planValue * factors.quarterly))
-          : null,
-      semi:
-        formData.paymentMode === "3"
-          ? Math.round(siAmount / (planValue * factors.semi))
-          : null,
+      return {
+      annual: Math.round(fixedValue * 12),
+      monthly: Math.round((fixedValue * 12) / factors.monthly),
+      quarterly: Math.round((fixedValue * 12) / factors.quarterly),
+      semi: Math.round((fixedValue * 12) / factors.semi),
     };
   };
   
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    
+  
     const calculatedAmounts = calculateSIAmounts();
     const { annual, monthly, quarterly, semi } = calculatedAmounts;
   
@@ -234,24 +251,13 @@ const STE = () => {
     }
   
     if (formData.paymentMode === "0") {
-      // For annual calculation, show the annual value
-      toast.success(
-        `Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(annual)}`
-      );
-    } else {
-      // For monthly, quarterly, and semi
-      const selectedMode =
-        formData.paymentMode === "1"
-          ? monthly
-          : formData.paymentMode === "2"
-          ? quarterly
-          : semi;
-  
-      if (selectedMode !== null) {
-        toast.success(
-          `Selected Mode Calculated Value: ${new Intl.NumberFormat("en-US").format(selectedMode)}`
-        );
-      }
+      toast.success(`Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(annual)}`);
+    } else if (formData.paymentMode === "1") {
+      toast.success(`Monthly Calculated Value: ${new Intl.NumberFormat("en-US").format(monthly!)}`);
+    } else if (formData.paymentMode === "2") {
+      toast.success(`Quarterly Calculated Value: ${new Intl.NumberFormat("en-US").format(quarterly!)}`);
+    } else if (formData.paymentMode === "3") {
+      toast.success(`Semi-Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(semi!)}`);
     }
   
     setCalculatedValues({
@@ -262,7 +268,6 @@ const STE = () => {
     });
   };
   
-
   const inputVariants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0 },
