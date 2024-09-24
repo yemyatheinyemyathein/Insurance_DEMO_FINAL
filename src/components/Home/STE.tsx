@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import STEShowUpTbl from "./STEShowUpTbl";
 import { fixedValuesByAgeAndPlan } from "../../constants/fixedData";
+import STEMainTable from "./STEMainTable";
 
 const formatNumber = (value: string): string => {
   const numberValue = value.replace(/,/g, "");
@@ -70,7 +71,9 @@ const STE = () => {
   });
   const [yearPlanOptions, setYearPlanOptions] = useState<Option[]>([]);
   const [productModeOptions, setProductModeOptions] = useState<Option[]>([]);
-  const [typingTimeout, setTypingTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [typingTimeout, setTypingTimeout] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const productModeOptionsType1 = [
     { value: "", text: "Select Calculation Mode" },
@@ -155,11 +158,11 @@ const STE = () => {
       calculateAge(value);
     }
 
-    if (name === 'amount') {
+    if (name === "amount") {
       const newTimeout = setTimeout(() => {
         validateSIAmount(value);
       }, 2000);
-      setTypingTimeout(newTimeout); 
+      setTypingTimeout(newTimeout);
     }
   };
 
@@ -198,13 +201,16 @@ const STE = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        validateSIAmount(formData.amount);
+      validateSIAmount(formData.amount);
     }, 5000);
 
     return () => clearTimeout(timer);
   }, [amount]);
 
-  const getFixedValueByAgeAndPlan = (age: number, yearPlan: string): number | null => {
+  const getFixedValueByAgeAndPlan = (
+    age: number,
+    yearPlan: string
+  ): number | null => {
     if (age < 18 || age > 60) {
       return null;
     }
@@ -212,37 +218,46 @@ const STE = () => {
     const planValues = fixedValuesByAgeAndPlan[ageRange];
     return planValues ? planValues[yearPlan] || null : null;
   };
-  
+
   const calculateSIAmounts = (): { [key: string]: number | null } => {
     const { yearPlan, age, amount } = formData;
-        const cleanAmount = amount.replace(/[^\d]/g, ""); 
+    const cleanAmount = amount.replace(/[^\d]/g, "");
     const ageNum = parseInt(age);
     const siAmountNum = parseInt(cleanAmount);
-    
+
     if (!ageNum || !yearPlan || !siAmountNum) {
       return { annual: null, monthly: null, quarterly: null, semi: null };
     }
-    
+
     const baseSIAmount = 1000000;
     const fixedValue = getFixedValueByAgeAndPlan(ageNum, yearPlan);
-    
+
     if (!fixedValue) {
       toast.error("No fixed value found for the selected age and year plan.");
       return { annual: null, monthly: null, quarterly: null, semi: null };
     }
-  
-    const scaleFactor = siAmountNum / baseSIAmount; 
-    const scaledFixedValue = fixedValue * scaleFactor; 
-    
+
+    const scaleFactor = siAmountNum / baseSIAmount;
+    const scaledFixedValue = fixedValue * scaleFactor;
+
     const factors = {
       annual: 12,
       monthly: 12,
       quarterly: 4,
       semi: 6,
     };
-    
-    console.log("Fixed", fixedValue, "Scaled Fixed", scaledFixedValue, "Scale Factor", scaleFactor, "SI Amount", siAmountNum);
-    
+
+    console.log(
+      "Fixed",
+      fixedValue,
+      "Scaled Fixed",
+      scaledFixedValue,
+      "Scale Factor",
+      scaleFactor,
+      "SI Amount",
+      siAmountNum
+    );
+
     return {
       annual: Math.round(scaledFixedValue * 12),
       monthly: Math.round((scaledFixedValue * 12) / factors.monthly),
@@ -250,29 +265,44 @@ const STE = () => {
       semi: Math.round((scaledFixedValue * 12) / factors.semi),
     };
   };
-  
-  
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-  
+
     const calculatedAmounts = calculateSIAmounts();
     const { annual, monthly, quarterly, semi } = calculatedAmounts;
-  
+
     if (annual === null) {
       toast.error("Please ensure all fields are filled correctly.");
       return;
     }
-  
+
     if (formData.paymentMode === "0") {
-      toast.success(`Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(annual)}`);
+      toast.success(
+        `Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(
+          annual
+        )}`
+      );
     } else if (formData.paymentMode === "1") {
-      toast.success(`Monthly Calculated Value: ${new Intl.NumberFormat("en-US").format(monthly!)}`);
+      toast.success(
+        `Monthly Calculated Value: ${new Intl.NumberFormat("en-US").format(
+          monthly!
+        )}`
+      );
     } else if (formData.paymentMode === "2") {
-      toast.success(`Quarterly Calculated Value: ${new Intl.NumberFormat("en-US").format(quarterly!)}`);
+      toast.success(
+        `Quarterly Calculated Value: ${new Intl.NumberFormat("en-US").format(
+          quarterly!
+        )}`
+      );
     } else if (formData.paymentMode === "3") {
-      toast.success(`Semi-Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(semi!)}`);
+      toast.success(
+        `Semi-Annual Calculated Value: ${new Intl.NumberFormat("en-US").format(
+          semi!
+        )}`
+      );
     }
-  
+
     setCalculatedValues({
       annual,
       monthly,
@@ -280,7 +310,7 @@ const STE = () => {
       semi,
     });
   };
-    
+
   const inputVariants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0 },
@@ -419,8 +449,13 @@ const STE = () => {
       </form>
       <ToastContainer />
 
-      <STEShowUpTbl selectedData={formData} calculatedValues={calculatedValues} />
-      </motion.div>
+      <STEShowUpTbl
+        selectedData={formData}
+        calculatedValues={calculatedValues}
+      />
+      <STEMainTable
+      />
+    </motion.div>
   );
 };
 

@@ -21,8 +21,6 @@ interface Props {
 
 const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
   const { customerName, dob, age, paymentMode, yearPlan, amount } = selectedData;
-
-  // Map paymentMode to the respective value in calculatedValues
   const paymentModeMap: { [key: string]: { label: string; value: number | null } } = {
     "0": { label: "Annual Premium", value: calculatedValues.annual },
     "1": { label: "Monthly Premium", value: calculatedValues.monthly },
@@ -34,9 +32,11 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
     label: "Premium Amount",
     value: null,
   };
-
+  const cleanAmount = amount.replace(/[^\d]/g, "");
   const showAnnualAsSubtext = paymentMode !== "0" && calculatedValues.annual !== null;
-
+  const annualValue = calculatedValues.annual ?? 0;
+  const totalPremiumPaid = annualValue * +yearPlan
+  const refundRate = ((+cleanAmount/totalPremiumPaid)*100).toFixed(1);
   return (
     <div className="mt-8 w-full p-4 bg-white shadow-lg rounded-lg">
       <h2 className="text-xl font-semibold mb-6 text-center">Selected Data</h2>
@@ -88,6 +88,24 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
                 (Annual Amount: {calculatedValues.annual})
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Premium Payment Period */}
+        <div className="bg-sky-100 border border-gray-300 p-4 rounded-lg w-full sm:w-1/2">
+          <h3 className="font-medium mb-2">Premium Payment Period {yearPlan} years</h3>
+          <div className="h-[0.5px] w-full bg-black mb-2" />
+          <div className="flex justify-between mb-2">
+            <span>Premium Paid Per year:</span>
+            <span>{annualValue}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Total Premium Paid:</span>
+            <span>{totalPremiumPaid}</span>
+          </div>
+          <div className="flex justify-between mt-2">
+            <span>Refund Rate: </span>
+            <span>{refundRate}%</span>
           </div>
         </div>
       </div>
