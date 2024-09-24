@@ -6,7 +6,7 @@ interface Props {
     age: string;
     product: string | number;
     term?: string;
-    paymentMode: string;
+    paymentMode: string; // 0: annual, 1: monthly, 2: quarterly, 3: semi
     calculationMode: string;
     yearPlan: string;
     amount: string;
@@ -22,27 +22,26 @@ interface Props {
 const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
   const { customerName, dob, age, paymentMode, yearPlan, amount } = selectedData;
 
-  const mainValue = calculatedValues.monthly || calculatedValues.quarterly || calculatedValues.semi || calculatedValues.annual;
-  
-  let mainLabel = 'Premium Amount';
-  if (calculatedValues.monthly) {
-    mainLabel = 'Monthly Premium';
-  } else if (calculatedValues.quarterly) {
-    mainLabel = 'Quarterly Premium';
-  } else if (calculatedValues.semi) {
-    mainLabel = 'Semi-Annual Premium';
-  } else if (calculatedValues.annual) {
-    mainLabel = 'Annual Premium';
-  }
+  // Map paymentMode to the respective value in calculatedValues
+  const paymentModeMap: { [key: string]: { label: string; value: number | null } } = {
+    "0": { label: "Annual Premium", value: calculatedValues.annual },
+    "1": { label: "Monthly Premium", value: calculatedValues.monthly },
+    "2": { label: "Quarterly Premium", value: calculatedValues.quarterly },
+    "3": { label: "Semi-Annual Premium", value: calculatedValues.semi },
+  };
 
-  const showAnnualAsSubtext = mainValue !== calculatedValues.annual && calculatedValues.annual !== null;
+  const { label: mainLabel, value: mainValue } = paymentModeMap[paymentMode] || {
+    label: "Premium Amount",
+    value: null,
+  };
+
+  const showAnnualAsSubtext = paymentMode !== "0" && calculatedValues.annual !== null;
 
   return (
     <div className="mt-8 w-full p-4 bg-white shadow-lg rounded-lg">
       <h2 className="text-xl font-semibold mb-6 text-center">Selected Data</h2>
 
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-        
         {/* Group 1: Name, Age, DOB */}
         <div className="border border-gray-300 p-4 rounded-lg w-full sm:w-1/2">
           <h3 className="font-medium mb-2">Personal Information</h3>
@@ -70,15 +69,16 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
             <span>{yearPlan}</span>
           </div>
           <div className="flex justify-between mb-2">
-            <span >Payment Mode:</span>
+            <span>Payment Mode:</span>
             <span>{paymentMode}</span>
           </div>
           <div className="flex justify-between">
-            <span >Amount:</span>
+            <span>Amount:</span>
             <span>{amount}</span>
           </div>
         </div>
 
+        {/* Premium Display */}
         <div className="text-center bg-blue-50 border border-blue-200 p-2 rounded-lg w-full sm:w-1/3 flex items-center justify-center">
           <div>
             <h3 className="text-lg font-medium mb-2">{mainLabel}</h3>

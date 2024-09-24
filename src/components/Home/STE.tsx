@@ -215,11 +215,9 @@ const STE = () => {
   
   const calculateSIAmounts = (): { [key: string]: number | null } => {
     const { yearPlan, age, amount } = formData;
-    
-    // Remove commas or any non-numeric characters from the SI amount string
-    const cleanAmount = amount.replace(/[^\d]/g, ""); 
+        const cleanAmount = amount.replace(/[^\d]/g, ""); 
     const ageNum = parseInt(age);
-    const siAmountNum = parseInt(cleanAmount); // Parse cleaned amount
+    const siAmountNum = parseInt(cleanAmount);
     
     if (!ageNum || !yearPlan || !siAmountNum) {
       return { annual: null, monthly: null, quarterly: null, semi: null };
@@ -238,7 +236,7 @@ const STE = () => {
     
     const factors = {
       annual: 12,
-      monthly: 1,
+      monthly: 12,
       quarterly: 4,
       semi: 6,
     };
