@@ -206,38 +206,53 @@ const STE = () => {
 
   const getFixedValueByAgeAndPlan = (age: number, yearPlan: string): number | null => {
     if (age < 18 || age > 60) {
-        return null;
+      return null;
     }
     const ageRange = String(age);
     const planValues = fixedValuesByAgeAndPlan[ageRange];
     return planValues ? planValues[yearPlan] || null : null;
-};
-
-  const calculateSIAmounts = (): { [key: string]: number | null } => {
-    const { yearPlan, age } = formData;
-    const ageNum = parseInt(age);
-    if (!ageNum || !yearPlan) return { annual: null, monthly: null, quarterly: null, semi: null };
+  };
   
+  const calculateSIAmounts = (): { [key: string]: number | null } => {
+    const { yearPlan, age, amount } = formData;
+    
+    // Remove commas or any non-numeric characters from the SI amount string
+    const cleanAmount = amount.replace(/[^\d]/g, ""); 
+    const ageNum = parseInt(age);
+    const siAmountNum = parseInt(cleanAmount); // Parse cleaned amount
+    
+    if (!ageNum || !yearPlan || !siAmountNum) {
+      return { annual: null, monthly: null, quarterly: null, semi: null };
+    }
+    
+    const baseSIAmount = 1000000;
     const fixedValue = getFixedValueByAgeAndPlan(ageNum, yearPlan);
-    console.log("This is Fixed Values", fixedValue);
+    
     if (!fixedValue) {
       toast.error("No fixed value found for the selected age and year plan.");
       return { annual: null, monthly: null, quarterly: null, semi: null };
     }
   
+    const scaleFactor = siAmountNum / baseSIAmount; 
+    const scaledFixedValue = fixedValue * scaleFactor; 
+    
     const factors = {
       annual: 12,
       monthly: 1,
       quarterly: 4,
       semi: 6,
     };
-      return {
-      annual: Math.round(fixedValue * 12),
-      monthly: Math.round((fixedValue * 12) / factors.monthly),
-      quarterly: Math.round((fixedValue * 12) / factors.quarterly),
-      semi: Math.round((fixedValue * 12) / factors.semi),
+    
+    console.log("Fixed", fixedValue, "Scaled Fixed", scaledFixedValue, "Scale Factor", scaleFactor, "SI Amount", siAmountNum);
+    
+    return {
+      annual: Math.round(scaledFixedValue * 12),
+      monthly: Math.round((scaledFixedValue * 12) / factors.monthly),
+      quarterly: Math.round((scaledFixedValue * 12) / factors.quarterly),
+      semi: Math.round((scaledFixedValue * 12) / factors.semi),
     };
   };
+  
   
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -267,7 +282,7 @@ const STE = () => {
       semi,
     });
   };
-  
+    
   const inputVariants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0 },
