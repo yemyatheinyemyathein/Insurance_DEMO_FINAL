@@ -6,7 +6,7 @@ interface Props {
     age: string;
     product: string | number;
     term?: string;
-    paymentMode: string; // 0: annual, 1: monthly, 2: quarterly, 3: semi
+    paymentMode: string;
     calculationMode: string;
     yearPlan: string;
     amount: string;
@@ -20,7 +20,8 @@ interface Props {
 }
 
 const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
-  const { customerName, dob, age, paymentMode, yearPlan, amount } = selectedData;
+  const { customerName, dob, age, paymentMode, yearPlan, amount, calculationMode } = selectedData;
+  
   const paymentModeMap: { [key: string]: { label: string; value: number | null } } = {
     "0": { label: "Annual Premium", value: calculatedValues.annual },
     "1": { label: "Monthly Premium", value: calculatedValues.monthly },
@@ -32,11 +33,29 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
     label: "Premium Amount",
     value: null,
   };
+
+  const paymentModeValueMap: { [key: string]: { label: string } } = {
+    "0": { label: "Annual" },
+    "1": { label: "Monthly" },
+    "2": { label: "Quarterly" },
+    "3": { label: "Semi-Annual" },
+  };
+
+  const { label: paymentModeLabel } = paymentModeValueMap[paymentMode] || {
+    label: "-"
+  };
+
   const cleanAmount = amount.replace(/[^\d]/g, "");
   const showAnnualAsSubtext = paymentMode !== "0" && calculatedValues.annual !== null;
   const annualValue = calculatedValues.annual ?? 0;
-  const totalPremiumPaid = annualValue * +yearPlan
-  const refundRate = ((+cleanAmount/totalPremiumPaid)*100).toFixed(1);
+  const totalPremiumPaid = annualValue * +yearPlan;
+  const refundRate = totalPremiumPaid > 0 ? ((+cleanAmount / totalPremiumPaid) * 100).toFixed(1) : "-";
+
+  const formattedMainValue = mainValue ? mainValue.toLocaleString() : "-";
+  const formattedAnnualValue = annualValue.toLocaleString();
+  const formattedTotalPremiumPaid = totalPremiumPaid.toLocaleString();
+  const formattedAnnualSubtext = calculatedValues.annual ? calculatedValues.annual.toLocaleString() : null;
+
   return (
     <div className="mt-8 w-full p-4 bg-white shadow-lg rounded-lg">
       <h2 className="text-xl font-semibold mb-6 text-center">Selected Data</h2>
@@ -66,11 +85,15 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
           <div className="h-[0.5px] w-full bg-black mb-2" />
           <div className="flex justify-between mb-2">
             <span>Year Plan:</span>
-            <span>{yearPlan}</span>
+            <span>{yearPlan} yrs</span>
           </div>
           <div className="flex justify-between mb-2">
             <span>Payment Mode:</span>
-            <span>{paymentMode}</span>
+            <span>{paymentModeLabel}</span>
+          </div>
+          <div className="flex justify-between mb-2">
+            <span>Calculation Mode:</span>
+            <span className="uppercase">{calculationMode}</span>
           </div>
           <div className="flex justify-between">
             <span>Amount:</span>
@@ -82,10 +105,10 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
         <div className="text-center bg-blue-50 border border-blue-200 p-2 rounded-lg w-full sm:w-1/3 flex items-center justify-center">
           <div>
             <h3 className="text-lg font-medium mb-2">{mainLabel}</h3>
-            <span className="text-4xl font-bold text-blue-700">{mainValue}</span>
+            <span className="text-4xl font-bold text-blue-700">{formattedMainValue}</span>
             {showAnnualAsSubtext && (
               <div className="text-sm text-gray-500 mt-2">
-                (Annual Amount: {calculatedValues.annual})
+                (Annual Amount: {formattedAnnualSubtext})
               </div>
             )}
           </div>
@@ -97,15 +120,23 @@ const STEShowUpTbl = ({ selectedData, calculatedValues }: Props) => {
           <div className="h-[0.5px] w-full bg-black mb-2" />
           <div className="flex justify-between mb-2">
             <span>Premium Paid Per year:</span>
-            <span>{annualValue}</span>
+            <span>{formattedAnnualValue}</span>
           </div>
           <div className="flex justify-between">
             <span>Total Premium Paid:</span>
-            <span>{totalPremiumPaid}</span>
+            <span>{formattedTotalPremiumPaid}</span>
           </div>
           <div className="flex justify-between mt-2">
             <span>Refund Rate: </span>
             <span>{refundRate}%</span>
+          </div>
+          <div className="flex justify-between mt-2">
+            <span>Death Benefit: </span>
+            <span>{amount}</span>
+          </div>
+          <div className="flex justify-between mt-2">
+            <span>Maturity Benefit: </span>
+            <span>{amount}</span>
           </div>
         </div>
       </div>

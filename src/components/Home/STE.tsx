@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FormEvent, useEffect } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -244,7 +244,7 @@ const STE = () => {
       annual: 12,
       monthly: 12,
       quarterly: 4,
-      semi: 6,
+      semi: 2,
     };
 
     console.log(
@@ -266,8 +266,41 @@ const STE = () => {
     };
   };
 
+  const isFormValid = useMemo(() => {
+    // Check required fields
+    const requiredFieldsFilled =
+      formData.agentName.trim() !== "" &&
+      formData.customerName.trim() !== "" &&
+      formData.dob.trim() !== "" &&
+      formData.age.trim() !== "" &&
+      formData.paymentMode.trim() !== "" &&
+      formData.calculationMode.trim() !== "" &&
+      formData.yearPlan.trim() !== "" &&
+      formData.amount.trim() !== "";
+
+    const termValid =
+      formData.product !== "3" || (formData.product === "3" && formData.term);
+
+    const age = parseInt(formData.age);
+    const ageValid = !isNaN(age) && age >= 10 && age <= 60;
+
+    const amountNumber = parseInt(formData.amount.replace(/,/g, ""));
+    const amountValid =
+      !isNaN(amountNumber) &&
+      amountNumber >= 1000000 &&
+      amountNumber <= 50000000;
+
+    return requiredFieldsFilled && termValid && ageValid && amountValid;
+  }, [formData]);
+
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    if (!isFormValid) {
+      toast.error("Please fill in all required fields correctly.");
+      return;
+    }
 
     const calculatedAmounts = calculateSIAmounts();
     const { annual, monthly, quarterly, semi } = calculatedAmounts;
@@ -441,8 +474,13 @@ const STE = () => {
         {renderFields(fields)}
         <motion.button
           type="submit"
-          className="block w-full px-4 py-2 text-white bg-sky-500 rounded hover:bg-sky-600"
-          whileHover={{ scale: 1.05 }}
+          disabled={!isFormValid}
+          className={`block w-full px-4 py-2 text-white rounded ${
+            isFormValid
+              ? "bg-sky-500 hover:bg-sky-600 cursor-pointer"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+          whileHover={isFormValid ? { scale: 1.05 } : {}}
         >
           Calculate
         </motion.button>

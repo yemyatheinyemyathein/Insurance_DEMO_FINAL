@@ -49,7 +49,7 @@ const NavBar = () => {
                 <Link
                   key={index}
                   to={`/${path}`}
-                  className={`font-semibold text-lg text-white hover:text-yellow-200 transition-colors duration-300 relative`}
+                  className={`font-semibold text-lg text-white hover:text-yellow-200 transition-colors duration-300 relative uppercase`}
                   style={{
                     textShadow: "0.5px 0.2px 1px rgba(0, 0, 0, 0.5)",
                   }}
